@@ -47,7 +47,13 @@ function isAuthenticated() {
  */
 function requireAuth(requiredRole = null) {
   const token = getToken();
-  const user = getUser();
+  let user = getUser();
+  
+  // If user exists but has no role (old session), force logout
+  if (user && !user.role) {
+    logout();
+    return false;
+  }
   
   if (!token || !user) {
     window.location.href = '/login.html';
@@ -55,11 +61,12 @@ function requireAuth(requiredRole = null) {
   }
   
   if (requiredRole && user.role !== requiredRole) {
-    // If unauthorized for the page, redirect based on their actual role
-    if (user.role === 'admin') {
-      window.location.href = '/dashboard.html';
-    } else {
-      window.location.href = '/store.html';
+    // Prevent infinite loop if already on the target page
+    const currentPath = window.location.pathname;
+    const targetPath = user.role === 'admin' ? '/dashboard.html' : '/store.html';
+    
+    if (currentPath !== targetPath) {
+      window.location.href = targetPath;
     }
     return false;
   }
@@ -73,11 +80,11 @@ function requireAuth(requiredRole = null) {
 function redirectIfAuth() {
   const user = getUser();
   if (isAuthenticated() && user) {
-    if (user.role === 'admin') {
-      window.location.href = '/dashboard.html';
-    } else {
-      window.location.href = '/store.html';
+    if (!user.role) {
+      logout();
+      return false;
     }
+    window.location.href = user.role === 'admin' ? '/dashboard.html' : '/store.html';
     return true;
   }
   return false;
