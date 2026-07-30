@@ -43,28 +43,48 @@ function isAuthenticated() {
 
 /**
  * Redirect to login if not authenticated (use on protected pages)
+ * If requiredRole is passed, also checks the role.
  */
-function requireAuth() {
-  if (!isAuthenticated()) {
+function requireAuth(requiredRole = null) {
+  const token = getToken();
+  const user = getUser();
+  
+  if (!token || !user) {
     window.location.href = '/login.html';
     return false;
   }
+  
+  if (requiredRole && user.role !== requiredRole) {
+    // If unauthorized for the page, redirect based on their actual role
+    if (user.role === 'admin') {
+      window.location.href = '/dashboard.html';
+    } else {
+      window.location.href = '/store.html';
+    }
+    return false;
+  }
+  
   return true;
 }
 
 /**
- * Redirect to dashboard if already authenticated (use on login/register pages)
+ * Redirect to dashboard or store if already authenticated
  */
 function redirectIfAuth() {
-  if (isAuthenticated()) {
-    window.location.href = '/dashboard.html';
+  const user = getUser();
+  if (isAuthenticated() && user) {
+    if (user.role === 'admin') {
+      window.location.href = '/dashboard.html';
+    } else {
+      window.location.href = '/store.html';
+    }
     return true;
   }
   return false;
 }
 
 /**
- * Initialize the navbar - show/hide elements based on auth state, set active link
+ * Initialize the navbar - show/hide elements based on auth state and role
  */
 function initNavbar() {
   const user = getUser();
@@ -74,9 +94,40 @@ function initNavbar() {
   const logoutBtn = document.getElementById('btn-logout');
 
   if (isAuthenticated() && user) {
-    if (navAuth) navAuth.style.display = 'flex';
+    if (navAuth) {
+      navAuth.style.display = 'flex';
+      
+      // Render links based on role
+      if (user.role === 'admin') {
+        navAuth.innerHTML = `
+          <li class="nav-item">
+            <a class="nav-link" href="dashboard.html"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="products.html"><i class="bi bi-box-seam me-1"></i>Inventario</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="sales.html"><i class="bi bi-cash-coin me-1"></i>Ventas</a>
+          </li>
+        `;
+      } else {
+        navAuth.innerHTML = `
+          <li class="nav-item">
+            <a class="nav-link" href="store.html"><i class="bi bi-shop me-1"></i>Catálogo</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="cart.html"><i class="bi bi-cart me-1"></i>Mi Carrito <span id="cart-badge" class="badge bg-danger rounded-pill ms-1 d-none">0</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="my-orders.html"><i class="bi bi-bag-check me-1"></i>Mis Compras</a>
+          </li>
+        `;
+        // Update cart badge
+        updateCartBadge();
+      }
+    }
     if (navGuest) navGuest.style.display = 'none';
-    if (userName) userName.textContent = user.name;
+    if (userName) userName.textContent = user.name + (user.role === 'admin' ? ' (Admin)' : '');
   } else {
     if (navAuth) navAuth.style.display = 'none';
     if (navGuest) navGuest.style.display = 'flex';
@@ -97,6 +148,19 @@ function initNavbar() {
       link.classList.add('active');
     }
   });
+}
+
+function updateCartBadge() {
+  const badge = document.getElementById('cart-badge');
+  if (badge) {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    if (cart.length > 0) {
+      badge.textContent = cart.reduce((sum, item) => sum + item.quantity, 0);
+      badge.classList.remove('d-none');
+    } else {
+      badge.classList.add('d-none');
+    }
+  }
 }
 
 /**

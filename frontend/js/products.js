@@ -7,7 +7,7 @@ let deleteModal;
 let products = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (!requireAuth()) return;
+  if (!requireAuth('admin')) return;
   initNavbar();
 
   // Initialize Modals

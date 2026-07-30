@@ -29,4 +29,16 @@ const auth = (req, res, next) => {
   }
 };
 
-module.exports = auth;
+const authorizeRoles = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Acceso denegado. No tienes permiso para realizar esta acción.',
+      });
+    }
+    next();
+  };
+};
+
+module.exports = { auth, authorizeRoles };

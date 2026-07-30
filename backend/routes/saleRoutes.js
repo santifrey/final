@@ -4,12 +4,11 @@ const {
   createSale,
   getSales,
   getSaleById,
-  updateSale,
   deleteSale,
 } = require('../controllers/saleController');
-const { createRules, updateRules } = require('../validators/saleValidator');
+const { createRules } = require('../validators/saleValidator');
 const validate = require('../middlewares/validate');
-const auth = require('../middlewares/auth');
+const { auth, authorizeRoles } = require('../middlewares/auth');
 
 // All routes are protected
 router.use(auth);
@@ -17,7 +16,6 @@ router.use(auth);
 router.get('/', getSales);
 router.get('/:id', getSaleById);
 router.post('/', validate(createRules), createSale);
-router.put('/:id', validate(updateRules), updateSale);
-router.delete('/:id', deleteSale);
+router.delete('/:id', authorizeRoles('admin'), deleteSale);
 
 module.exports = router;

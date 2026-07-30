@@ -1,5 +1,27 @@
 const mongoose = require('mongoose');
 
+const saleItemSchema = new mongoose.Schema({
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true,
+  },
+  name: {
+    type: String,
+    required: true,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 1,
+  },
+  unitPrice: {
+    type: Number,
+    required: true,
+    min: 0,
+  },
+});
+
 const saleSchema = new mongoose.Schema(
   {
     user: {
@@ -7,24 +29,11 @@ const saleSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'El usuario es obligatorio'],
     },
-    product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product',
-      required: [true, 'El producto es obligatorio'],
-    },
-    quantity: {
+    items: [saleItemSchema],
+    totalAmount: {
       type: Number,
-      required: [true, 'La cantidad es obligatoria'],
-      min: [1, 'La cantidad debe ser al menos 1'],
-    },
-    unitPrice: {
-      type: Number,
-      required: [true, 'El precio unitario es obligatorio'],
-      min: [0, 'El precio unitario no puede ser negativo'],
-    },
-    totalPrice: {
-      type: Number,
-      min: [0, 'El precio total no puede ser negativo'],
+      required: true,
+      min: 0,
     },
     date: {
       type: Date,
@@ -35,11 +44,5 @@ const saleSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
-
-// Calculate total price before saving
-saleSchema.pre('save', function (next) {
-  this.totalPrice = this.quantity * this.unitPrice;
-  next();
-});
 
 module.exports = mongoose.model('Sale', saleSchema);

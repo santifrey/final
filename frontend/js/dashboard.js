@@ -3,7 +3,7 @@
 // =============================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (!requireAuth()) return;
+  if (!requireAuth('admin')) return;
   initNavbar();
 
   // Set welcome name

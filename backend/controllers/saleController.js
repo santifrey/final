@@ -2,49 +2,69 @@ const Sale = require('../models/Sale');
 const User = require('../models/User');
 const Product = require('../models/Product');
 
-// @desc    Create a sale
+// @desc    Create a sale (Checkout)
 // @route   POST /api/sales
-// @access  Private
+// @access  Private (Admin or Customer)
 const createSale = async (req, res, next) => {
   try {
-    const { user, product, quantity } = req.body;
+    const { items } = req.body;
+    
+    // User comes from the auth token
+    const userId = req.user.id;
 
-    // Verify user exists
-    const existingUser = await User.findById(user);
-    if (!existingUser) {
-      return res.status(404).json({
+    if (!items || items.length === 0) {
+      return res.status(400).json({
         success: false,
-        message: 'El usuario especificado no existe',
+        message: 'El carrito está vacío',
       });
     }
 
-    // Verify product exists
-    const existingProduct = await Product.findById(product);
-    if (!existingProduct) {
-      return res.status(404).json({
-        success: false,
-        message: 'El producto especificado no existe',
-      });
-    }
+    let totalAmount = 0;
+    const processedItems = [];
 
-    // Set unit price from product
-    const unitPrice = existingProduct.price;
+    // Verify products, stock and calculate total
+    for (const item of items) {
+      const product = await Product.findById(item.product);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: `Producto con ID ${item.product} no encontrado`,
+        });
+      }
+
+      if (product.stock < item.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Stock insuficiente para ${product.name}`,
+        });
+      }
+
+      // Calculate totals
+      totalAmount += product.price * item.quantity;
+      processedItems.push({
+        product: product._id,
+        name: product.name,
+        quantity: item.quantity,
+        unitPrice: product.price,
+      });
+
+      // Reduce stock
+      product.stock -= item.quantity;
+      await product.save();
+    }
 
     const sale = await Sale.create({
-      user,
-      product,
-      quantity,
-      unitPrice,
+      user: userId,
+      items: processedItems,
+      totalAmount,
     });
 
-    // Populate references for the response
     const populatedSale = await Sale.findById(sale._id)
-      .populate('user', 'name email')
-      .populate('product', 'name price');
+      .populate('user', 'name email');
 
     res.status(201).json({
       success: true,
-      message: 'Venta registrada exitosamente',
+      message: 'Compra realizada exitosamente',
       data: populatedSale,
     });
   } catch (error) {
@@ -54,12 +74,19 @@ const createSale = async (req, res, next) => {
 
 // @desc    Get all sales
 // @route   GET /api/sales
-// @access  Private
+// @access  Private (Admins see all, Customers see theirs)
 const getSales = async (req, res, next) => {
   try {
-    const sales = await Sale.find()
+    let query = {};
+    
+    // If not admin, only show their own sales
+    if (req.user.role !== 'admin') {
+      query.user = req.user.id;
+    }
+
+    const sales = await Sale.find(query)
       .populate('user', 'name email')
-      .populate('product', 'name price')
+      .populate('items.product', 'name category')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -79,13 +106,21 @@ const getSaleById = async (req, res, next) => {
   try {
     const sale = await Sale.findById(req.params.id)
       .populate('user', 'name email')
-      .populate('product', 'name price');
+      .populate('items.product', 'name category');
 
     if (!sale) {
       return res.status(404).json({
         success: false,
-        message: 'Venta no encontrada',
+        message: 'Venta/Pedido no encontrado',
       });
+    }
+
+    // Check if customer is trying to access someone else's order
+    if (req.user.role !== 'admin' && sale.user._id.toString() !== req.user.id) {
+       return res.status(403).json({
+         success: false,
+         message: 'Acceso denegado',
+       });
     }
 
     res.status(200).json({
@@ -97,70 +132,9 @@ const getSaleById = async (req, res, next) => {
   }
 };
 
-// @desc    Update sale
-// @route   PUT /api/sales/:id
-// @access  Private
-const updateSale = async (req, res, next) => {
-  try {
-    const existingSale = await Sale.findById(req.params.id);
-    if (!existingSale) {
-      return res.status(404).json({
-        success: false,
-        message: 'Venta no encontrada',
-      });
-    }
-
-    const { user, product, quantity } = req.body;
-
-    // Verify user exists if provided
-    if (user) {
-      const existingUser = await User.findById(user);
-      if (!existingUser) {
-        return res.status(404).json({
-          success: false,
-          message: 'El usuario especificado no existe',
-        });
-      }
-    }
-
-    // Verify product exists if provided and get price
-    let unitPrice = existingSale.unitPrice;
-    if (product) {
-      const existingProduct = await Product.findById(product);
-      if (!existingProduct) {
-        return res.status(404).json({
-          success: false,
-          message: 'El producto especificado no existe',
-        });
-      }
-      unitPrice = existingProduct.price;
-    }
-
-    // Update fields
-    existingSale.user = user || existingSale.user;
-    existingSale.product = product || existingSale.product;
-    existingSale.quantity = quantity || existingSale.quantity;
-    existingSale.unitPrice = unitPrice;
-
-    await existingSale.save();
-
-    const populatedSale = await Sale.findById(existingSale._id)
-      .populate('user', 'name email')
-      .populate('product', 'name price');
-
-    res.status(200).json({
-      success: true,
-      message: 'Venta actualizada exitosamente',
-      data: populatedSale,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 // @desc    Delete sale
 // @route   DELETE /api/sales/:id
-// @access  Private
+// @access  Private (Admin only)
 const deleteSale = async (req, res, next) => {
   try {
     const sale = await Sale.findById(req.params.id);
@@ -182,10 +156,12 @@ const deleteSale = async (req, res, next) => {
   }
 };
 
+// updateSale is intentionally removed for simplicity in this ecommerce refactor,
+// usually orders are not edited, they are cancelled or returned.
+
 module.exports = {
   createSale,
   getSales,
   getSaleById,
-  updateSale,
   deleteSale,
 };

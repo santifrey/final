@@ -4,7 +4,7 @@ const User = require('../models/User');
 // Generate JWT token
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, email: user.email, name: user.name },
+    { id: user._id, email: user.email, name: user.name, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: '24h' }
   );
@@ -26,7 +26,7 @@ const register = async (req, res, next) => {
       });
     }
 
-    const user = await User.create({ name, email, password });
+    const user = await User.create({ name, email, password, role: 'customer' });
     const token = generateToken(user);
 
     res.status(201).json({

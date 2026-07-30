@@ -9,15 +9,18 @@ const {
 } = require('../controllers/productController');
 const { createRules, updateRules } = require('../validators/productValidator');
 const validate = require('../middlewares/validate');
-const auth = require('../middlewares/auth');
+const { auth, authorizeRoles } = require('../middlewares/auth');
 
-// All routes are protected
+// All routes require authentication
 router.use(auth);
 
+// GET routes are accessible by any authenticated user (admin or customer)
 router.get('/', getProducts);
 router.get('/:id', getProductById);
-router.post('/', validate(createRules), createProduct);
-router.put('/:id', validate(updateRules), updateProduct);
-router.delete('/:id', deleteProduct);
+
+// Write routes are protected for admins only
+router.post('/', authorizeRoles('admin'), validate(createRules), createProduct);
+router.put('/:id', authorizeRoles('admin'), validate(updateRules), updateProduct);
+router.delete('/:id', authorizeRoles('admin'), deleteProduct);
 
 module.exports = router;

@@ -3,7 +3,7 @@ const router = express.Router();
 const { register, login, getProfile } = require('../controllers/authController');
 const { registerRules, loginRules } = require('../validators/authValidator');
 const validate = require('../middlewares/validate');
-const auth = require('../middlewares/auth');
+const { auth } = require('../middlewares/auth');
 
 // Public routes
 router.post('/register', validate(registerRules), register);

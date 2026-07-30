@@ -3,7 +3,8 @@ const dotenv = require('dotenv');
 const bcrypt = require('bcrypt');
 
 // Load env vars
-dotenv.config();
+const path = require('path');
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const User = require('./models/User');
 const Product = require('./models/Product');
@@ -21,12 +22,14 @@ const usersData = [
   {
     name: 'Admin User',
     email: 'admin@test.com',
-    password: 'password123'
+    password: 'password123',
+    role: 'admin'
   },
   {
     name: 'Juan Perez',
     email: 'juan@test.com',
-    password: 'password123'
+    password: 'password123',
+    role: 'customer'
   }
 ];
 
@@ -88,37 +91,39 @@ const importData = async () => {
     // Insert some sales randomly
     const salesData = [
       {
-        user: createdUsers[0]._id,
-        product: createdProducts[0]._id,
-        quantity: 1,
-        unitPrice: createdProducts[0].price,
-        totalPrice: createdProducts[0].price * 1
+        user: createdUsers[1]._id, // Only customer buys
+        items: [
+          {
+            product: createdProducts[0]._id,
+            name: createdProducts[0].name,
+            quantity: 1,
+            unitPrice: createdProducts[0].price
+          },
+          {
+            product: createdProducts[4]._id,
+            name: createdProducts[4].name,
+            quantity: 2,
+            unitPrice: createdProducts[4].price
+          }
+        ],
+        totalAmount: createdProducts[0].price * 1 + createdProducts[4].price * 2
       },
       {
         user: createdUsers[1]._id,
-        product: createdProducts[1]._id,
-        quantity: 2,
-        unitPrice: createdProducts[1].price,
-        totalPrice: createdProducts[1].price * 2
-      },
-      {
-        user: createdUsers[0]._id,
-        product: createdProducts[2]._id,
-        quantity: 4,
-        unitPrice: createdProducts[2].price,
-        totalPrice: createdProducts[2].price * 4
-      },
-      {
-        user: createdUsers[1]._id,
-        product: createdProducts[4]._id,
-        quantity: 1,
-        unitPrice: createdProducts[4].price,
-        totalPrice: createdProducts[4].price * 1
+        items: [
+          {
+            product: createdProducts[1]._id,
+            name: createdProducts[1].name,
+            quantity: 1,
+            unitPrice: createdProducts[1].price
+          }
+        ],
+        totalAmount: createdProducts[1].price * 1
       }
     ];
 
     const createdSales = await Sale.create(salesData);
-    console.log(`${createdSales.length} Ventas creadas.`);
+    console.log(`${createdSales.length} Pedidos creados.`);
 
     console.log('¡Inyección de datos completada exitosamente!');
     process.exit();
