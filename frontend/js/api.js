@@ -8,7 +8,7 @@ const API_BASE = 'https://final-vqrm.onrender.com/api';
  * Make an API request with automatic JWT injection and error handling
  */
 async function apiRequest(endpoint, options = {}) {
-  const token = localStorage.getItem('token');
+  const token = sessionStorage.getItem('token');
 
   const config = {
     headers: {
@@ -35,8 +35,8 @@ async function apiRequest(endpoint, options = {}) {
     if (!response.ok) {
       // Handle 401 - redirect to login
       if (response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
         window.location.href = '/login.html';
         return;
       }
