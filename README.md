@@ -49,9 +49,13 @@ final/
 │   ├── server.js        # Punto de entrada principal
 │   └── .env             # Variables de entorno
 └── frontend/            # Archivos estáticos servidos por Express
-    ├── index.html       # Entry/Redirect
-    ├── login.html       # Login page
-    ├── dashboard.html   # Panel de control
+    ├── index.html       # Entrada / redirección
+    ├── login.html       # Inicio de sesión
+    ├── register.html    # Registro de usuarios
+    ├── dashboard.html   # Panel principal
+    ├── products.html    # Gestión de productos
+    ├── sales.html       # Gestión de ventas
+    ├── users.html       # Gestión de usuarios
     ├── css/             # Hojas de estilo personalizadas
     └── js/              # Lógica de frontend e integraciones API
 ```
