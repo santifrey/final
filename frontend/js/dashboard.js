@@ -44,7 +44,7 @@ async function loadRecentSales() {
     if (sales.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="5">
+          <td colspan="4">
             <div class="empty-state">
               <i class="bi bi-cart-x"></i>
               <p>No hay ventas registradas aún</p>
@@ -59,7 +59,14 @@ async function loadRecentSales() {
     // Show only the last 5 sales
     const recentSales = sales.slice(0, 5);
 
-    tbody.innerHTML = recentSales.map(sale => `
+    tbody.innerHTML = recentSales.map(sale => {
+      const itemsCount = (sale.items || []).length;
+      const itemsSummary = (sale.items || []).map(item => {
+        const name = item.product ? item.product.name : 'N/A';
+        return `${name} × ${item.quantity}`;
+      }).join(', ');
+
+      return `
       <tr>
         <td>${formatDate(sale.date || sale.createdAt)}</td>
         <td>
@@ -67,21 +74,19 @@ async function loadRecentSales() {
           ${sale.user ? sale.user.name : 'N/A'}
         </td>
         <td>
-          <i class="bi bi-box-seam me-1 text-secondary"></i>
-          ${sale.product ? sale.product.name : 'N/A'}
-        </td>
-        <td>
-          <span class="badge bg-secondary">${sale.quantity}</span>
+          <span class="badge bg-secondary me-1">${itemsCount}</span>
+          <span class="small text-secondary">${itemsSummary}</span>
         </td>
         <td class="fw-bold" style="color: var(--success);">
           ${formatCurrency(sale.totalPrice)}
         </td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
   } catch (error) {
     tbody.innerHTML = `
       <tr>
-        <td colspan="5" class="text-center text-danger py-3">
+        <td colspan="4" class="text-center text-danger py-3">
           <i class="bi bi-exclamation-triangle me-2"></i>Error al cargar las ventas
         </td>
       </tr>

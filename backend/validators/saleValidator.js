@@ -6,12 +6,15 @@ const createRules = [
     .withMessage('El usuario es obligatorio')
     .isMongoId()
     .withMessage('El ID del usuario no es válido'),
-  body('product')
+  body('items')
+    .isArray({ min: 1 })
+    .withMessage('La venta debe tener al menos un producto'),
+  body('items.*.product')
     .notEmpty()
     .withMessage('El producto es obligatorio')
     .isMongoId()
     .withMessage('El ID del producto no es válido'),
-  body('quantity')
+  body('items.*.quantity')
     .notEmpty()
     .withMessage('La cantidad es obligatoria')
     .isInt({ min: 1 })
@@ -23,11 +26,15 @@ const updateRules = [
     .optional()
     .isMongoId()
     .withMessage('El ID del usuario no es válido'),
-  body('product')
+  body('items')
+    .optional()
+    .isArray({ min: 1 })
+    .withMessage('La venta debe tener al menos un producto'),
+  body('items.*.product')
     .optional()
     .isMongoId()
     .withMessage('El ID del producto no es válido'),
-  body('quantity')
+  body('items.*.quantity')
     .optional()
     .isInt({ min: 1 })
     .withMessage('La cantidad debe ser un número entero mayor o igual a 1'),

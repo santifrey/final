@@ -7,7 +7,7 @@ const Product = require('../models/Product');
 // @access  Private
 const createSale = async (req, res, next) => {
   try {
-    const { user, product, quantity } = req.body;
+    const { user, items } = req.body;
 
     // Verify user exists
     const existingUser = await User.findById(user);
@@ -18,29 +18,32 @@ const createSale = async (req, res, next) => {
       });
     }
 
-    // Verify product exists
-    const existingProduct = await Product.findById(product);
-    if (!existingProduct) {
-      return res.status(404).json({
-        success: false,
-        message: 'El producto especificado no existe',
+    // Verify each product exists and set unitPrice
+    const saleItems = [];
+    for (const item of items) {
+      const product = await Product.findById(item.product);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: `El producto con ID ${item.product} no existe`,
+        });
+      }
+      saleItems.push({
+        product: item.product,
+        quantity: item.quantity,
+        unitPrice: product.price,
       });
     }
 
-    // Set unit price from product
-    const unitPrice = existingProduct.price;
-
     const sale = await Sale.create({
       user,
-      product,
-      quantity,
-      unitPrice,
+      items: saleItems,
     });
 
     // Populate references for the response
     const populatedSale = await Sale.findById(sale._id)
       .populate('user', 'name email')
-      .populate('product', 'name price');
+      .populate('items.product', 'name price');
 
     res.status(201).json({
       success: true,
@@ -59,7 +62,7 @@ const getSales = async (req, res, next) => {
   try {
     const sales = await Sale.find()
       .populate('user', 'name email')
-      .populate('product', 'name price')
+      .populate('items.product', 'name price')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -79,7 +82,7 @@ const getSaleById = async (req, res, next) => {
   try {
     const sale = await Sale.findById(req.params.id)
       .populate('user', 'name email')
-      .populate('product', 'name price');
+      .populate('items.product', 'name price');
 
     if (!sale) {
       return res.status(404).json({
@@ -110,7 +113,7 @@ const updateSale = async (req, res, next) => {
       });
     }
 
-    const { user, product, quantity } = req.body;
+    const { user, items } = req.body;
 
     // Verify user exists if provided
     if (user) {
@@ -121,32 +124,34 @@ const updateSale = async (req, res, next) => {
           message: 'El usuario especificado no existe',
         });
       }
+      existingSale.user = user;
     }
 
-    // Verify product exists if provided and get price
-    let unitPrice = existingSale.unitPrice;
-    if (product) {
-      const existingProduct = await Product.findById(product);
-      if (!existingProduct) {
-        return res.status(404).json({
-          success: false,
-          message: 'El producto especificado no existe',
+    // Verify and update items if provided
+    if (items && items.length > 0) {
+      const saleItems = [];
+      for (const item of items) {
+        const product = await Product.findById(item.product);
+        if (!product) {
+          return res.status(404).json({
+            success: false,
+            message: `El producto con ID ${item.product} no existe`,
+          });
+        }
+        saleItems.push({
+          product: item.product,
+          quantity: item.quantity,
+          unitPrice: product.price,
         });
       }
-      unitPrice = existingProduct.price;
+      existingSale.items = saleItems;
     }
-
-    // Update fields
-    existingSale.user = user || existingSale.user;
-    existingSale.product = product || existingSale.product;
-    existingSale.quantity = quantity || existingSale.quantity;
-    existingSale.unitPrice = unitPrice;
 
     await existingSale.save();
 
     const populatedSale = await Sale.findById(existingSale._id)
       .populate('user', 'name email')
-      .populate('product', 'name price');
+      .populate('items.product', 'name price');
 
     res.status(200).json({
       success: true,
