@@ -18,8 +18,9 @@ const createSale = async (req, res, next) => {
       });
     }
 
-    // Verify each product exists and set unitPrice
+    // Verify each product exists, validate stock, and set unitPrice
     const saleItems = [];
+    const productsToUpdate = [];
     for (const item of items) {
       const product = await Product.findById(item.product);
       if (!product) {
@@ -28,6 +29,15 @@ const createSale = async (req, res, next) => {
           message: `El producto con ID ${item.product} no existe`,
         });
       }
+
+      if (item.quantity > product.stock) {
+        return res.status(400).json({
+          success: false,
+          message: `El producto "${product.name}" no tiene stock suficiente. Stock disponible: ${product.stock}`,
+        });
+      }
+
+      productsToUpdate.push({ product, quantity: item.quantity });
       saleItems.push({
         product: item.product,
         quantity: item.quantity,
@@ -39,6 +49,11 @@ const createSale = async (req, res, next) => {
       user,
       items: saleItems,
     });
+
+    for (const { product, quantity } of productsToUpdate) {
+      product.stock -= quantity;
+      await product.save();
+    }
 
     // Populate references for the response
     const populatedSale = await Sale.findById(sale._id)
@@ -129,7 +144,23 @@ const updateSale = async (req, res, next) => {
 
     // Verify and update items if provided
     if (items && items.length > 0) {
+      const currentItems = existingSale.items || [];
+      const productsToRestore = [];
+
+      for (const currentItem of currentItems) {
+        const product = await Product.findById(currentItem.product);
+        if (product) {
+          product.stock += currentItem.quantity;
+          productsToRestore.push(product);
+        }
+      }
+
+      for (const product of productsToRestore) {
+        await product.save();
+      }
+
       const saleItems = [];
+      const productsToUpdate = [];
       for (const item of items) {
         const product = await Product.findById(item.product);
         if (!product) {
@@ -138,16 +169,33 @@ const updateSale = async (req, res, next) => {
             message: `El producto con ID ${item.product} no existe`,
           });
         }
+
+        if (item.quantity > product.stock) {
+          return res.status(400).json({
+            success: false,
+            message: `El producto "${product.name}" no tiene stock suficiente. Stock disponible: ${product.stock}`,
+          });
+        }
+
+        productsToUpdate.push({ product, quantity: item.quantity });
         saleItems.push({
           product: item.product,
           quantity: item.quantity,
           unitPrice: product.price,
         });
       }
-      existingSale.items = saleItems;
-    }
 
-    await existingSale.save();
+      existingSale.items = saleItems;
+
+      await existingSale.save();
+
+      for (const { product, quantity } of productsToUpdate) {
+        product.stock -= quantity;
+        await product.save();
+      }
+    } else {
+      await existingSale.save();
+    }
 
     const populatedSale = await Sale.findById(existingSale._id)
       .populate('user', 'name email')
@@ -174,6 +222,14 @@ const deleteSale = async (req, res, next) => {
         success: false,
         message: 'Venta no encontrada',
       });
+    }
+
+    for (const item of sale.items) {
+      const product = await Product.findById(item.product);
+      if (product) {
+        product.stock += item.quantity;
+        await product.save();
+      }
     }
 
     await Sale.findByIdAndDelete(req.params.id);
