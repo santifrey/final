@@ -47,7 +47,7 @@ Un sistema web Full Stack para la gestión de productos, ventas y usuarios. Desa
 5. Agregar las variables de entorno necesarias:
    - `MONGODB_URI`
    - `JWT_SECRET`
-6. Realizar el deploy y copiar la URL pública generada por Render para usarla desde el frontend.
+6. Realizar el deploy y copiar la URL pública generada por Render para usarla enla variable API_BASE de api.js en el freontend.
 
 ### 3. Base de datos en MongoDB Atlas
 
