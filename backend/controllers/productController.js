@@ -95,8 +95,10 @@ const deleteProduct = async (req, res, next) => {
       });
     }
 
-    // Check for associated sales
-    const salesCount = await Sale.countDocuments({ product: req.params.id });
+    // Check for associated sales in the new items[] structure
+    const salesCount = await Sale.countDocuments({
+      'items.product': req.params.id,
+    });
     if (salesCount > 0) {
       return res.status(400).json({
         success: false,

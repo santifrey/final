@@ -6,6 +6,7 @@ const createRules = [
   check('password', 'La contraseña debe tener al menos 6 caracteres').isLength({
     min: 6,
   }),
+  check('role', 'El rol debe ser user o admin').optional().isIn(['user', 'admin']),
 ];
 
 const updateRules = [
@@ -14,6 +15,7 @@ const updateRules = [
   check('password', 'La contraseña debe tener al menos 6 caracteres').optional().isLength({
     min: 6,
   }),
+  check('role', 'El rol debe ser user o admin').optional().isIn(['user', 'admin']),
 ];
 
 module.exports = {

@@ -44,7 +44,7 @@ const getUserById = async (req, res, next) => {
 // @access  Private
 const createUser = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
     const userExists = await User.findOne({ email });
     if (userExists) {
       return res.status(400).json({
@@ -53,7 +53,17 @@ const createUser = async (req, res, next) => {
       });
     }
 
-    const user = await User.create({ name, email, password });
+    const requestedRole = req.user?.role === 'admin' && ['user', 'admin'].includes(role)
+      ? role
+      : 'user';
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: requestedRole,
+    });
+
     res.status(201).json({
       success: true,
       data: user,
@@ -68,7 +78,7 @@ const createUser = async (req, res, next) => {
 // @access  Private
 const updateUser = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
     let user = await User.findById(req.params.id);
     
     if (!user) {
@@ -92,6 +102,9 @@ const updateUser = async (req, res, next) => {
     user.email = email || user.email;
     if (password) {
       user.password = password;
+    }
+    if (req.user?.role === 'admin' && ['user', 'admin'].includes(role)) {
+      user.role = role;
     }
 
     await user.save();

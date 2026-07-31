@@ -82,15 +82,29 @@ function renderUsers() {
 }
 
 function openUserModal() {
+  const currentUser = getUser();
+  const isAdmin = currentUser && currentUser.role === 'admin';
+
   document.getElementById('user-form').reset();
   document.getElementById('user-id').value = '';
   document.getElementById('modal-title').textContent = 'Nuevo Usuario';
   document.getElementById('password').setAttribute('required', 'required');
+  document.getElementById('role').value = 'user';
+
+  const roleFieldWrapper = document.getElementById('role-field-wrapper');
+  if (isAdmin) {
+    roleFieldWrapper.style.display = 'block';
+  } else {
+    roleFieldWrapper.style.display = 'none';
+  }
+
   clearAlerts('alert-container');
   userModal.show();
 }
 
 function editUser(id) {
+  const currentUser = getUser();
+  const isAdmin = currentUser && currentUser.role === 'admin';
   const user = users.find(u => u._id === id);
   if (!user) return;
 
@@ -99,6 +113,10 @@ function editUser(id) {
   document.getElementById('email').value = user.email;
   document.getElementById('password').value = '';
   document.getElementById('password').removeAttribute('required');
+  document.getElementById('role').value = user.role || 'user';
+
+  const roleFieldWrapper = document.getElementById('role-field-wrapper');
+  roleFieldWrapper.style.display = isAdmin ? 'block' : 'none';
   
   document.getElementById('modal-title').textContent = 'Editar Usuario';
   clearAlerts('alert-container');
@@ -113,10 +131,16 @@ async function saveUser() {
   }
 
   const id = document.getElementById('user-id').value;
+  const currentUser = getUser();
+  const isAdmin = currentUser && currentUser.role === 'admin';
   const userData = {
     name: document.getElementById('name').value.trim(),
     email: document.getElementById('email').value.trim(),
   };
+
+  if (isAdmin) {
+    userData.role = document.getElementById('role').value;
+  }
 
   const password = document.getElementById('password').value;
   if (password) {
