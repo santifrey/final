@@ -1,4 +1,4 @@
-# Sales Management System
+# Gestion de Ventas
 
 Un sistema web Full Stack para la gestión de productos, ventas y usuarios. Desarrollado con Node.js, Express y MongoDB en el backend (arquitectura MVC), y HTML/JS vanilla con Bootstrap 5 en el frontend.
 
