@@ -29,9 +29,33 @@ Un sistema web Full Stack para la gestión de productos, ventas y usuarios. Desa
 *   [Node.js](https://nodejs.org/) (v16 o superior recomendado)
 *   [MongoDB](https://www.mongodb.com/) (Instancia local o cluster en MongoDB Atlas)
 
+## Despliegue Paso a Paso
+
+### 1. Frontend en Netlify
+
+1. Crear un nuevo sitio estático en Netlify.
+2. Seleccionar la carpeta `frontend` como directorio de publicación.
+3. En la configuración del sitio, dejar `index.html` como archivo de entrada principal.
 
 
+### 2. Backend en Render
 
+1. Crear un nuevo servicio Web en Render.
+2. Conectar el repositorio GitHub y seleccionar la carpeta `backend`.
+3. Configurar el entorno de ejecución como `Node`.
+4. Definir `npm start` como comando de inicio.
+5. Agregar las variables de entorno necesarias:
+   - `MONGODB_URI`
+   - `JWT_SECRET`
+6. Realizar el deploy y copiar la URL pública generada por Render para usarla desde el frontend.
+
+### 3. Base de datos en MongoDB Atlas
+
+1. Crear un proyecto en MongoDB Atlas.
+2. Crear un cluster gratuito y configurar acceso por IP o usuario de base de datos.
+3. Obtener la cadena de conexión `MONGODB_URI`.
+4. Guardarla en las variables de entorno del servicio backend desplegado en Render.
+5. Asegurarse de que el backend pueda conectarse usando esa URI y que el usuario configurado tenga permisos sobre la base de datos.
 
 ## Estructura del Proyecto
 
