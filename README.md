@@ -37,6 +37,7 @@ Un sistema web Full Stack para la gestión de productos, ventas y usuarios. Desa
 
 El backend sigue un patrón estricto MVC.
 
+```text
 final/
 ├── backend/
 │   ├── config/          # Conexión a Base de Datos
@@ -53,7 +54,7 @@ final/
     ├── dashboard.html   # Panel de control
     ├── css/             # Hojas de estilo personalizadas
     └── js/              # Lógica de frontend e integraciones API
-
+```
 
 ## Enlaces
 
