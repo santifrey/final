@@ -22,14 +22,25 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Serve frontend static files
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
-
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/sales', saleRoutes);
+
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API is running'
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'API is healthy'
+  });
+});
 
 // Handle 404 for API routes
 app.all('/api/*', (req, res) => {
@@ -46,7 +57,6 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Servidor ejecutándose en puerto ${PORT}`);
-  console.log(`Frontend disponible en http://localhost:${PORT}`);
 });
 
 // Handle unhandled promise rejections

@@ -2,7 +2,7 @@
 // API Client - Fetch wrapper with JWT injection
 // =============================================
 
-const API_BASE = '/api';
+const API_BASE = 'https://final-vqrm.onrender.com/api';
 
 /**
  * Make an API request with automatic JWT injection and error handling
