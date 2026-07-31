@@ -57,5 +57,5 @@ final/
 
 ## Enlaces
 
-*   **Repositorio**: [https://github.com/tu-usuario/sales-management](https://github.com/tu-usuario/sales-management) *(Sustituir con enlace real)*
-*   **Despliegue**: [Enlace a producción pendiente] *(A desplegar en Render, Railway, etc.)*
+*   **Repositorio**: https://github.com/santifrey/final
+*   **Despliegue**: https://finalaw2.netlify.app/
